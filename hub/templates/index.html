@@ -5,18 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Wildlife Cameras Hub</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; max-width: 1100px; }
     .row { display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
-    .card { border:1px solid #ddd; border-radius:12px; padding:14px; margin:12px 0; }
-    button { border:0; padding:10px 14px; border-radius:10px; cursor:pointer; }
-    .primary { background:#111; color:#fff; }
+    .card { border:1px solid #ddd; border-radius:14px; padding:14px; margin:12px 0; }
     .muted { color:#555; }
-    pre { background:#0b0b0b; color:#eaeaea; padding:12px; border-radius:12px; overflow:auto; }
-    img { max-width: 380px; border-radius: 12px; border: 1px solid #eee; }
+    button { border:0; padding:10px 14px; border-radius:10px; cursor:pointer; background:#e9e9e9; }
+    button.primary { background:#111; color:#fff; }
+    pre { background:#0b0b0b; color:#eaeaea; padding:12px; border-radius:12px; overflow:auto; white-space: pre-wrap; }
+    img { max-width: 520px; width: 100%; border-radius: 12px; border: 1px solid #eee; }
     .grid { display:grid; grid-template-columns: 1fr; gap: 12px; }
-    @media(min-width: 900px){ .grid { grid-template-columns: 1fr 1fr; } }
+    @media(min-width: 900px){ .grid { grid-template-columns: 1.1fr 0.9fr; } }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size: 13px; background:#f1f1f1; }
+    .ok { background:#e8f7ea; }
+    .bad { background:#fdeaea; }
   </style>
 </head>
+
 <body>
   <h1>Wildlife Cameras Hub</h1>
   <p class="muted">Service: <b>{{ service }}</b></p>
@@ -32,49 +36,90 @@
 
   <h2>Cameras</h2>
 
+  {% if cameras|length == 0 %}
+    <div class="card muted">
+      No cameras found. Add lines to <code>hub/cameras.txt</code>.
+    </div>
+  {% endif %}
+
   {% for cam in cameras %}
+  {% set st = statuses.get(cam.name, {"reachable": false, "active": "unknown", "enabled": "unknown", "snippet": "", "error": ""}) %}
+
   <div class="card">
-    <div class="row">
-      <div style="flex:1">
-        <div><b>{{ cam.name }}</b></div>
+    <div class="row" style="justify-content: space-between;">
+      <div style="flex:1; min-width: 280px;">
+        <div style="font-size: 18px;"><b>{{ cam.name }}</b></div>
         <div class="muted">{{ cam.ssh }}</div>
         {% if cam.preview_base %}
           <div class="muted">Preview: <a href="{{ cam.preview_base }}" target="_blank">{{ cam.preview_base }}</a></div>
         {% endif %}
       </div>
-      <form method="post" action="/restart/{{ cam.name }}">
-        <button type="submit">Restart</button>
-      </form>
-    </div>
 
-    {% if cam.preview_base %}
-    <div style="margin-top:12px" class="grid">
-      <div>
-        <!-- Change /latest.jpg if your camera server uses a different path -->
-        <div class="muted" style="margin-bottom:6px">Preview image (edit path if needed)</div>
-        <img src="{{ cam.preview_base }}/latest.jpg" alt="preview"/>
+      <div class="row">
+        <form method="post" action="/pull/{{ cam.name }}">
+          <button type="submit">Pull</button>
+        </form>
+        <form method="post" action="/restart/{{ cam.name }}">
+          <button type="submit">Restart</button>
+        </form>
       </div>
     </div>
-    {% endif %}
+
+    <div style="margin-top:10px" class="row">
+      {% if st.get("reachable") %}
+        <span class="pill ok">reachable</span>
+      {% else %}
+        <span class="pill bad">unreachable</span>
+      {% endif %}
+
+      <span class="pill">active: <b>{{ st.get("active","unknown") }}</b></span>
+      <span class="pill">enabled: <b>{{ st.get("enabled","unknown") }}</b></span>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div>
+        {% if st.get("snippet") %}
+          <div class="muted" style="margin-bottom:6px;">Service status</div>
+          <pre>{{ st.get("snippet") }}</pre>
+        {% endif %}
+        {% if st.get("error") %}
+          <div class="muted" style="margin-bottom:6px;">Error</div>
+          <pre>{{ st.get("error") }}</pre>
+        {% endif %}
+      </div>
+
+      <div>
+        {% if cam.preview_base %}
+          <div class="muted" style="margin-bottom:6px;">MJPEG stream</div>
+          <img src="{{ cam.preview_base }}/stream.mjpg" alt="stream"/>
+          <div class="muted" style="margin-top:6px;">
+            If this doesn’t load, confirm the camera serves <code>/stream.mjpg</code> and that the base URL is reachable from the hub.
+          </div>
+        {% else %}
+          <div class="muted">
+            No preview URL set for this camera. Add a 3rd field in <code>hub/cameras.txt</code>:
+            <br/>
+            <code>name, user@host, http://host:port</code>
+          </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
   {% endfor %}
 
   <h2>Last action</h2>
   <div class="card">
     <div class="muted">Timestamp: {{ state.ts }}</div>
-    {% if state.last %}
-      <pre>{{ state.last }}</pre>
+
+    {% if state.action %}
+      <div class="muted">Action: <b>{{ state.action }}</b></div>
+    {% endif %}
+
+    {% if state.result %}
+      <pre>{{ state.result | tojson(indent=2) }}</pre>
     {% else %}
       <div class="muted">No actions run yet.</div>
     {% endif %}
-    {% if state.result %}
-      <pre>{{ state.result | tojson(indent=2) }}</pre>
-    {% endif %}
-  </div>
-
-  <div class="muted" style="margin-top:18px">
-    Tip: If previews don’t load, your camera server probably doesn’t expose <code>/latest.jpg</code>.
-    Change that path in <code>index.html</code> to whatever your rpi-cam-server provides.
   </div>
 </body>
 </html>
