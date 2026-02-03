@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_DIR="$HOME/wildlife-cameras"
-SERVICE="rpi-cam-server"
+REPO_DIR="/home/julianflowers/wildlife-cameras"
 LIST="$REPO_DIR/hub/cameras.txt"
+SERVICE="rpi-cam-server"
+SSH_KEY="/home/julianflowers/.ssh/id_ed25519_camhub"
 
 cd "$REPO_DIR"
+
 echo "📥 Updating hub repo"
 GIT_SSH_COMMAND="ssh -o BatchMode=yes" git pull
 
@@ -20,7 +22,7 @@ while IFS= read -r LINE; do
   [[ -z "$LINE" ]] && continue
   [[ "$LINE" =~ ^# ]] && continue
 
-  # cameras.txt formats supported:
+  # cameras.txt supports:
   # 1) ssh_only
   # 2) name, ssh, preview_url
   if [[ "$LINE" == *","* ]]; then
@@ -33,8 +35,11 @@ while IFS= read -r LINE; do
 
   echo "➡️  $NAME ($SSH_HOST)"
 
-  ssh -i "$HOME/.ssh/id_ed25519_camhub" -o BatchMode=yes "$SSH_HOST" \
-    "cd ~/wildlife-cameras && git pull && sudo systemctl restart rpi-cam-server  && systemctl --no-pager --full status $SERVICE | head -n 12"
+  ssh -i "$SSH_KEY" -o BatchMode=yes "$SSH_HOST" \
+    "cd ~/wildlife-cameras && \
+     git pull && \
+     sudo systemctl restart $SERVICE && \
+     systemctl --no-pager --full status $SERVICE | head -n 12"
 
 done < "$LIST"
 
