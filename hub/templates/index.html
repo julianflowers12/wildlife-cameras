@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Wildlife Cameras Hub</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
+    .card { border:1px solid #ddd; border-radius:12px; padding:14px; margin:12px 0; }
+    button { border:0; padding:10px 14px; border-radius:10px; cursor:pointer; }
+    .primary { background:#111; color:#fff; }
+    .muted { color:#555; }
+    pre { background:#0b0b0b; color:#eaeaea; padding:12px; border-radius:12px; overflow:auto; }
+    img { max-width: 380px; border-radius: 12px; border: 1px solid #eee; }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 12px; }
+    @media(min-width: 900px){ .grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>Wildlife Cameras Hub</h1>
+  <p class="muted">Service: <b>{{ service }}</b></p>
+
+  <div class="card">
+    <div class="row">
+      <form method="post" action="/update_all">
+        <button class="primary" type="submit">Update all (git pull + restart)</button>
+      </form>
+      <a class="muted" href="/state.json">state.json</a>
+    </div>
+  </div>
+
+  <h2>Cameras</h2>
+
+  {% for cam in cameras %}
+  <div class="card">
+    <div class="row">
+      <div style="flex:1">
+        <div><b>{{ cam.name }}</b></div>
+        <div class="muted">{{ cam.ssh }}</div>
+        {% if cam.preview_base %}
+          <div class="muted">Preview: <a href="{{ cam.preview_base }}" target="_blank">{{ cam.preview_base }}</a></div>
+        {% endif %}
+      </div>
+      <form method="post" action="/restart/{{ cam.name }}">
+        <button type="submit">Restart</button>
+      </form>
+    </div>
+
+    {% if cam.preview_base %}
+    <div style="margin-top:12px" class="grid">
+      <div>
+        <!-- Change /latest.jpg if your camera server uses a different path -->
+        <div class="muted" style="margin-bottom:6px">Preview image (edit path if needed)</div>
+        <img src="{{ cam.preview_base }}/latest.jpg" alt="preview"/>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <h2>Last action</h2>
+  <div class="card">
+    <div class="muted">Timestamp: {{ state.ts }}</div>
+    {% if state.last %}
+      <pre>{{ state.last }}</pre>
+    {% else %}
+      <div class="muted">No actions run yet.</div>
+    {% endif %}
+    {% if state.result %}
+      <pre>{{ state.result | tojson(indent=2) }}</pre>
+    {% endif %}
+  </div>
+
+  <div class="muted" style="margin-top:18px">
+    Tip: If previews don’t load, your camera server probably doesn’t expose <code>/latest.jpg</code>.
+    Change that path in <code>index.html</code> to whatever your rpi-cam-server provides.
+  </div>
+</body>
+</html>

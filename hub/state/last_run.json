@@ -1,0 +1,12 @@
+{
+  "action": "update_all",
+  "result": {
+    "ok": false,
+    "returncode": 255,
+    "stdout": "Already up to date.\n\u27a1\ufe0f  Updating julian6, raspberypi6@julian6.local, http://192.168.68.76:8000\n",
+    "stderr": "hostname contains invalid characters\n",
+    "seconds": 13.65,
+    "cmd": "bash /home/julianflowers/wildlife-cameras/hub/update_all.sh"
+  },
+  "ts": "2026-02-03 11:56:40 GMT"
+}
