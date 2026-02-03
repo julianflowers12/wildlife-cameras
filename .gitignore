@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.log
+*.sqlite
+*.db
+.env
+.env.*
+.DS_Store
+media/
+videos/
+stills/
+tmp/
+.cache/
+*.mp4
+*.jpg
+*.jpeg
+*.png
