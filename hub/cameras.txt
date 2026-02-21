@@ -1,1 +1,6 @@
-julian6, raspberypi6@julian6.local, http://192.168.68.76:8000
+julian6, raspberypi6@192.168.68.76, http://192.168.68.76:8000
+julian1, raspberypi1@192.168.68.71, http://192.168.68.71:8000
+julian2, julian2@192.168.68.72l, http://192.168.68.72:8000 
+julian4, raspberypi4@192.168.68.74, http://192.168.68.74:8000
+julian3, raspberypi3@192.168.68.73, http://192.168.68.73:8000
+julian8, raspberypi8@192.168.68.78, http://192.168.68.78:8000
